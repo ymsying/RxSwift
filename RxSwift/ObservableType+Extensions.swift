@@ -18,9 +18,12 @@ extension ObservableType {
      - returns: Subscription object used to unsubscribe from the observable sequence.
      */
     public func subscribe(_ on: @escaping (Event<Element>) -> Void) -> Disposable {
+        // 构建一个匿名观察者，统一观察所有Event
         let observer = AnonymousObserver { e in
             on(e)
         }
+        /// 生成一个AnonymousObserver，
+        /// 并对AnonymousObservable进行真实订阅
         return self.asObservable().subscribe(observer)
     }
     
@@ -97,6 +100,7 @@ extension ObservableType {
             
             let callStack = Hooks.recordCallStackOnError ? Hooks.customCaptureSubscriptionCallstack() : []
             
+        // 构成匿名观察者
             let observer = AnonymousObserver<Element> { event in
                 
                 #if DEBUG
@@ -121,6 +125,8 @@ extension ObservableType {
                 }
             }
             return Disposables.create(
+                // 将新建的观察者加入队列，
+                // 或者直接调用observable的subscribe，Just
                 self.asObservable().subscribe(observer),
                 disposable
             )

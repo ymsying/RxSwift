@@ -60,7 +60,7 @@ extension InfallibleType {
         )
     }
     
-    /**
+    /**𬱖
      Subscribes an element handler, a completion handler and disposed handler to an observable sequence.
      
      Error callback is not exposed because `Infallible` can't error out.
@@ -87,6 +87,8 @@ extension InfallibleType {
      - returns: Subscription object used to unsubscribe from the observable sequence.
      */
     public func subscribe(_ on: @escaping (InfallibleEvent<Element>) -> Void) -> Disposable {
+        
+        // 独立编写subscribe方法
         let eventHandler: ((Event<Element>) -> Void) = { event in
             switch event {
             case .next(let element):
@@ -97,6 +99,7 @@ extension InfallibleType {
                 rxFatalErrorInDebug("Infallible must never emit a error event. error: \(error)")
             }
         }
+        // 对AnonymousObservable进行订阅
         return self.asObservable().subscribe(eventHandler)
     }
 }

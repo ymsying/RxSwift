@@ -33,6 +33,10 @@ private final class AnonymousDisposable : DisposeBase, Cancelable {
         self.disposeAction = disposeAction
         super.init()
     }
+    deinit
+    {
+        
+    }
 
     /// Calls the disposal action if and only if the current instance hasn't been disposed yet.
     ///

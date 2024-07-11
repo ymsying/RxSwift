@@ -28,17 +28,21 @@ extension Infallible {
      - returns: The observable sequence with the specified implementation for the `subscribe` method.
      */
     public static func create(subscribe: @escaping (@escaping InfallibleObserver) -> Disposable) -> Infallible<Element> {
+        
+        // source为AnonymousObservable类型，
+        // 返回的 observer 为AnyObserver(AnonymousObservableSink)
         let source = Observable<Element>.create { observer in
-            subscribe { event in
+            subscribe { event in // 初始化函数中的调用会会传递回event
                 switch event {
                 case .next(let element):
-                    observer.onNext(element)
+                    observer.onNext(element) // 发给AnyObserver，
+                    // AnyObserver的event被传递给AnonymousObservableSink的`.on`方法
                 case .completed:
                     observer.onCompleted()
                 }
             }
         }
-
+        // 包装后返回
         return Infallible(source)
     }
 }

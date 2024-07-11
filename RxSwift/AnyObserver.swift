@@ -33,6 +33,7 @@ public struct AnyObserver<Element> : ObserverType {
     ///
     /// - parameter event: Event instance.
     public func on(_ event: Event<Element>) {
+        // 转发给AnonymousObservableSink的`on`方法
         self.observer(event)
     }
 

@@ -18,6 +18,8 @@ extension ObservableType {
      - returns: The observable sequence with the specified implementation for the `subscribe` method.
      */
     public static func create(_ subscribe: @escaping (AnyObserver<Element>) -> Disposable) -> Observable<Element> {
+        
+        /// 生成匿名可观察对象，持有初始化函数
         AnonymousObservable(subscribe)
     }
 }
@@ -47,7 +49,7 @@ final private class AnonymousObservableSink<Observer: ObserverType>: Sink<Observ
             if load(self.isStopped) == 1 {
                 return
             }
-            self.forwardOn(event)
+            self.forwardOn(event) // 转发给sink
         case .error, .completed:
             if fetchOr(self.isStopped, 1) == 0 {
                 self.forwardOn(event)
@@ -57,6 +59,7 @@ final private class AnonymousObservableSink<Observer: ObserverType>: Sink<Observ
     }
 
     func run(_ parent: Parent) -> Disposable {
+        /// 执行初始化函数
         parent.subscribeHandler(AnyObserver(self))
     }
 }
@@ -64,6 +67,7 @@ final private class AnonymousObservableSink<Observer: ObserverType>: Sink<Observ
 final private class AnonymousObservable<Element>: Producer<Element> {
     typealias SubscribeHandler = (AnyObserver<Element>) -> Disposable
 
+    /// 初始化函数
     let subscribeHandler: SubscribeHandler
 
     init(_ subscribeHandler: @escaping SubscribeHandler) {
@@ -71,7 +75,9 @@ final private class AnonymousObservable<Element>: Producer<Element> {
     }
 
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
+        // 产生sink
         let sink = AnonymousObservableSink(observer: observer, cancel: cancel)
+        // 触发初始化函数执行，并传递一个AnyObserver给初始化函数
         let subscription = sink.run(self)
         return (sink: sink, subscription: subscription)
     }

@@ -29,6 +29,9 @@ extension PrimitiveSequenceType where Trait == SingleTrait {
      */
     public static func create(subscribe: @escaping (@escaping SingleObserver) -> Disposable) -> Single<Element> {
         let source = Observable<Element>.create { observer in
+            // 内外互传递
+//            func singleObserver(_ e: SingleEvent<Element>) { }
+//            subscribe(singleObserver)
             return subscribe { event in
                 switch event {
                 case .success(let element):

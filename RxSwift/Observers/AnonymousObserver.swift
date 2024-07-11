@@ -18,7 +18,9 @@ final class AnonymousObserver<Element>: ObserverBase<Element> {
         self.eventHandler = eventHandler
     }
 
+    // 重写父类的onCore
     override func onCore(_ event: Event<Element>) {
+        // 调用创建时的回调，向最终订阅者转发
         self.eventHandler(event)
     }
     

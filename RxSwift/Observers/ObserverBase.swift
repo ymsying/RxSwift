@@ -9,10 +9,12 @@
 class ObserverBase<Element> : Disposable, ObserverType {
     private let isStopped = AtomicInt(0)
 
+    // sink.forwardOn调用，传入事件，
     func on(_ event: Event<Element>) {
         switch event {
         case .next:
             if load(self.isStopped) == 0 {
+                // 调用具体子类的ocCore()
                 self.onCore(event)
             }
         case .error, .completed:

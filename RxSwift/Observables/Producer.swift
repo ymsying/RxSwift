@@ -22,8 +22,12 @@ class Producer<Element>: Observable<Element> {
         }
         else {
             return CurrentThreadScheduler.instance.schedule(()) { _ in
+                
+                // 具体类AnonymousObservable的订阅
                 let disposer = SinkDisposer()
+                // 产生对应的sink
                 let sinkAndSubscription = self.run(observer, cancel: disposer)
+                // 保存，sink
                 disposer.setSinkAndSubscription(sink: sinkAndSubscription.sink, subscription: sinkAndSubscription.subscription)
 
                 return disposer

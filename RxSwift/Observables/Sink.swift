@@ -31,6 +31,7 @@ class Sink<Observer: ObserverType>: Disposable {
         if isFlagSet(self.disposed, 1) {
             return
         }
+        // 转发给AnonymousObserver(ObserverBase.on)
         self.observer.on(event)
     }
 

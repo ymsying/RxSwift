@@ -7,7 +7,7 @@
 //
 
 /// Represents two disposable resources that are disposed together.
-private final class BinaryDisposable : DisposeBase, Cancelable {
+public final class BinaryDisposable : DisposeBase, Cancelable {
 
     private let disposed = AtomicInt(0)
 
@@ -16,7 +16,7 @@ private final class BinaryDisposable : DisposeBase, Cancelable {
     private var disposable2: Disposable?
 
     /// - returns: Was resource disposed.
-    var isDisposed: Bool {
+    public var isDisposed: Bool {
         isFlagSet(self.disposed, 1)
     }
 
@@ -29,16 +29,26 @@ private final class BinaryDisposable : DisposeBase, Cancelable {
         self.disposable2 = disposable2
         super.init()
     }
+    deinit {
+        
+    }
 
     /// Calls the disposal action if and only if the current instance hasn't been disposed yet.
     ///
     /// After invoking disposal action, disposal action will be dereferenced.
-    func dispose() {
+    public func dispose() {
         if fetchOr(self.disposed, 1) == 0 {
             self.disposable1?.dispose()
             self.disposable2?.dispose()
             self.disposable1 = nil
             self.disposable2 = nil
+        }
+    }
+    public subscript(index: Int) -> Void {
+        if index == 1 {
+            print("disposable1: \(disposable1)")
+        } else if index == 2 {
+            print("disposable2: \(disposable2)")
         }
     }
 }
