@@ -6,6 +6,8 @@
 //  Copyright © 2015 Krunoslav Zaher. All rights reserved.
 //
 
+import Foundation
+
 extension ObservableType {
     /**
      Wraps the source sequence in order to run its subscription and unsubscription logic on the specified
@@ -61,6 +63,8 @@ final private class SubscribeOnSink<Ob: ObservableType, Observer: ObserverType>:
     }
     
     func on(_ event: Event<Element>) {
+//        print("Thread:\(Thread.current) --> \(#function) \(#line) \(#file)")
+        // 不切换线程，与Observable.on为同一个线程
         self.forwardOn(event)
         
         if event.isStopEvent {
@@ -74,8 +78,13 @@ final private class SubscribeOnSink<Ob: ObservableType, Observer: ObserverType>:
         
         disposeEverything.disposable = cancelSchedule
         
+        // 切换到相应的队列中进行执行订阅操作
+        // 发送信息是否在同一个线程? 不同，与Observable.on(xx)所在的线程相同，schedule(on:..)与observer(on:...)相互独立
+        // parent.scheduler为外部出入的schedule(on:xxxShcheduler)
+        // parent.scheduler(Mainscheduler).schedule通过queue.async()进行异步任务插入
         let disposeSchedule = self.parent.scheduler.schedule(()) { _ -> Disposable in
-            let subscription = self.parent.source.subscribe(self)
+//            print("Thread:\(Thread.current) --> \(#function) \(#line) \(#file)")
+            let subscription = self.parent.source.subscribe(self) // 再次调用producer的subscribe()，进行enqueue操作
             disposeEverything.disposable = ScheduledDisposable(scheduler: self.parent.scheduler, disposable: subscription)
             return Disposables.create()
         }

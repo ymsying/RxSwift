@@ -387,10 +387,12 @@ private final class MergeSinkIter<SourceElement, SourceSequence: ObservableConve
         self.disposeKey = disposeKey
     }
     
+    // 新序列产生的事件内容回调
     func on(_ event: Event<Element>) {
         self.parent.lock.performLocked {
             switch event {
             case .next(let value):
+                // 变形后的内容向原始订阅发送
                 self.parent.forwardOn(.next(value))
             case .error(let error):
                 self.parent.forwardOn(.error(error))
@@ -455,7 +457,9 @@ private class MergeSink<SourceElement, SourceSequence: ObservableConvertibleType
     func on(_ event: Event<SourceElement>) {
         switch event {
         case .next(let element):
+            // 产生形变，将具体事件内容转为可观察序列
             if let value = self.nextElementArrived(element: element) {
+                // 对新产生的序列进行订阅，
                 self.subscribeInner(value.asObservable())
             }
         case .error(let error):
@@ -476,6 +480,7 @@ private class MergeSink<SourceElement, SourceSequence: ObservableConvertibleType
         let iterDisposable = SingleAssignmentDisposable()
         if let disposeKey = self.group.insert(iterDisposable) {
             let iter = MergeSinkIter(parent: self, disposeKey: disposeKey)
+            // 使用iter对新序列进行订阅
             let subscription = source.subscribe(iter)
             iterDisposable.setDisposable(subscription)
         }

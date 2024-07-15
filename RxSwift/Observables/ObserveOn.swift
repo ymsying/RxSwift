@@ -193,6 +193,8 @@ final private class ObserveOnSerialDispatchQueueSink<Observer: ObserverType>: Ob
         self.cachedScheduleLambda = { pair in
             guard !cancel.isDisposed else { return Disposables.create() }
 
+            // pair == (self, event)
+            // 向前（AnonymousObserver）发送Event，
             pair.sink.observer.on(pair.event)
 
             if pair.event.isStopEvent {
@@ -204,6 +206,9 @@ final private class ObserveOnSerialDispatchQueueSink<Observer: ObserverType>: Ob
     }
 
     override func onCore(_ event: Event<Element>) {
+        // 在指定队列中执行cachedScheduleLambda
+        // scheduler.schedule(state, action)
+        // cachedScheduleLambda((self, event))
         _ = self.scheduler.schedule((self, event), action: self.cachedScheduleLambda!)
     }
 
@@ -229,7 +234,10 @@ final private class ObserveOnSerialDispatchQueue<Element>: Producer<Element> {
     }
 
     override func run<Observer: ObserverType>(_ observer: Observer, cancel: Cancelable) -> (sink: Disposable, subscription: Disposable) where Observer.Element == Element {
+        // 将AnonymousObserver保存在sink中
         let sink = ObserveOnSerialDispatchQueueSink(scheduler: self.scheduler, observer: observer, cancel: cancel)
+        // sink对原始序列进行订阅，
+        // 订阅操作与外界Observable.subscribe()所在线程一致
         let subscription = self.source.subscribe(sink)
         return (sink: sink, subscription: subscription)
     }
