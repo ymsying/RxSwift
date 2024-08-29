@@ -11,13 +11,14 @@ import Foundation
 import RxSwift
 
 class RxTarget : NSObject
-               , Disposable {
+               , Disposable // 遵从Disposable协议
+{
     
     private var retainSelf: RxTarget?
     
     override init() {
         super.init()
-        self.retainSelf = self
+        self.retainSelf = self // 自我引用，延长生命周期
 
 #if TRACE_RESOURCES
         _ = Resources.incrementTotal()
@@ -32,7 +33,7 @@ class RxTarget : NSObject
 #if DEBUG
         MainScheduler.ensureRunningOnMainThread()
 #endif
-        self.retainSelf = nil
+        self.retainSelf = nil // 手动触发dispose，释放对象
     }
 
 #if TRACE_RESOURCES

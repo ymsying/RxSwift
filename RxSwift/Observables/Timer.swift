@@ -61,6 +61,7 @@ final private class TimerSink<Observer: ObserverType> : Sink<Observer> where Obs
     }
 
     func run() -> Disposable {
+        // 周期性产生事件
         return self.parent.scheduler.schedulePeriodic(0 as Observer.Element, startAfter: self.parent.dueTime, period: self.parent.period!) { state in
             self.lock.performLocked {
                 self.forwardOn(.next(state))
@@ -81,6 +82,7 @@ final private class TimerOneOffSink<Observer: ObserverType>: Sink<Observer> wher
     }
 
     func run() -> Disposable {
+        // 延迟产生一次事件
         return self.parent.scheduler.scheduleRelative(self, dueTime: self.parent.dueTime) { [unowned self] _ -> Disposable in
             self.forwardOn(.next(0))
             self.forwardOn(.completed)

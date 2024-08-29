@@ -45,7 +45,7 @@ public class OperationQueueScheduler: ImmediateSchedulerType {
         }
 
         operation.queuePriority = self.queuePriority
-
+        // 简单封装
         self.operationQueue.addOperation(operation)
         
         return cancel

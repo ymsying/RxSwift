@@ -28,6 +28,7 @@ public final class ConcurrentMainScheduler : SchedulerType {
     }
 
     private init(mainScheduler: MainScheduler) {
+        // 固定为主队列
         self.mainQueue = DispatchQueue.main
         self.mainScheduler = mainScheduler
     }
@@ -49,6 +50,7 @@ public final class ConcurrentMainScheduler : SchedulerType {
 
         let cancel = SingleAssignmentDisposable()
 
+        // 主队列异步执行
         self.mainQueue.async {
             if cancel.isDisposed {
                 return

@@ -23,7 +23,7 @@ extension DispatchQueueConfiguration {
                 return
             }
 
-
+            // 立即执行
             cancel.setDisposable(action(state))
         }
 
@@ -31,10 +31,13 @@ extension DispatchQueueConfiguration {
     }
 
     func scheduleRelative<StateType>(_ state: StateType, dueTime: RxTimeInterval, action: @escaping (StateType) -> Disposable) -> Disposable {
+        
+        // 延迟时间
         let deadline = DispatchTime.now() + dueTime
 
         let compositeDisposable = CompositeDisposable()
 
+        // 延迟一次计时器
         let timer = DispatchSource.makeTimerSource(queue: self.queue)
         timer.schedule(deadline: deadline, leeway: self.leeway)
 
@@ -68,7 +71,8 @@ extension DispatchQueueConfiguration {
         let initial = DispatchTime.now() + startAfter
 
         var timerState = state
-
+        
+        // 周期性定时器
         let timer = DispatchSource.makeTimerSource(queue: self.queue)
         timer.schedule(deadline: initial, repeating: period, leeway: self.leeway)
         

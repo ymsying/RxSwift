@@ -105,13 +105,14 @@ extension Reactive where Base: UITableView {
     - returns: Disposable object that can be used to unbind.
     */
     public func items<
-            DataSource: RxTableViewDataSourceType & UITableViewDataSource,
+            DataSource: RxTableViewDataSourceType & UITableViewDataSource, // 要求遵从RxTableViewDataSourceType和UITableViewDataSource协议
             Source: ObservableType>
         (dataSource: DataSource)
         -> (_ source: Source)
         -> Disposable
         where DataSource.Element == Source.Element {
-        return { source in
+        
+        return { source in // source为Driver等类的Observable
             // This is called for side effects only, and to make sure delegate proxy is in place when
             // data source is being bound.
             // This is needed because theoretically the data source subscription itself might
@@ -120,10 +121,13 @@ extension Reactive where Base: UITableView {
             // Therefore it's better to set delegate proxy first, just to be sure.
             _ = self.delegate
             // Strong reference is needed because data source is in use until result subscription is disposed
+            // Rxcocoa对ObservableType进行扩展subscribeProxyDataSource
             return source.subscribeProxyDataSource(ofObject: self.base, dataSource: dataSource as UITableViewDataSource, retainDataSource: true) { [weak tableView = self.base] (_: RxTableViewDataSourceProxy, event) -> Void in
                 guard let tableView = tableView else {
                     return
                 }
+                // 方法内部的binding调起，
+                // 向外调用RxTableViewSectionedAnimatedDataSource的observedEvent方法
                 dataSource.tableView(tableView, observedEvent: event)
             }
         }

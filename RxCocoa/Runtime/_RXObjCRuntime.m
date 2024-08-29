@@ -671,7 +671,7 @@ static NSMutableDictionary<NSString *, RXInterceptWithOptimizedObserver> *optimi
     // Some toll free bridged classes don't handle `object_setClass` well and cause crashes.
     //
     // To make `deallocating` as robust as possible, original implementation will be replaced.
-    if (selector == deallocSelector) {
+    if (selector == deallocSelector) { // 单独针对dealloc
         Class __nonnull deallocSwizzingTarget = [target class];
         IMP interceptorIMPForSelector = [self interceptorImplementationForSelector:selector forClass:deallocSwizzingTarget];
         if (interceptorIMPForSelector != nil) {
@@ -703,7 +703,7 @@ static NSMutableDictionary<NSString *, RXInterceptWithOptimizedObserver> *optimi
         }
 
         // optimized interception method
-        if (optimizedIntercept != nil) {
+        if (optimizedIntercept != nil) { // 已经添加过的
             IMP interceptorIMPForSelector = [self interceptorImplementationForSelector:selector forClass:swizzlingImplementorClass];
             if (interceptorIMPForSelector != nil) {
                 return interceptorIMPForSelector;
@@ -719,11 +719,12 @@ static NSMutableDictionary<NSString *, RXInterceptWithOptimizedObserver> *optimi
             }
         }
         // default fallback to observing by forwarding messages
-        else {
+        else { // 初始化
             if ([self forwardingSelector:selector forClass:swizzlingImplementorClass]) {
                 return RX_default_target_implementation();
             }
 
+            // 为类添加并交换新老方法
             if (![self observeByForwardingMessages:swizzlingImplementorClass
                                           selector:selector
                                             target:target
@@ -819,12 +820,14 @@ static NSMutableDictionary<NSString *, RXInterceptWithOptimizedObserver> *optimi
 
 
 -(BOOL)forwardingSelector:(SEL)selector forClass:(Class __nonnull)class {
+    // 判断是否已经劫持过
     return [self.forwardedSelectorsByClass[CLASS_VALUE(class)] containsObject:SEL_VALUE(selector)];
 }
 
 -(void)registerForwardedSelector:(SEL)selector forClass:(Class __nonnull)class {
     NSValue *classValue = CLASS_VALUE(class);
 
+    // 保存被劫持过的方法
     NSMutableSet<NSValue *> *forwardedSelectors = self.forwardedSelectorsByClass[classValue];
 
     if (forwardedSelectors == nil) {
@@ -839,6 +842,7 @@ static NSMutableDictionary<NSString *, RXInterceptWithOptimizedObserver> *optimi
                           selector:(SEL)selector
                             target:(id __nonnull)target
                              error:(NSErrorParam)error {
+    // 调用swizzleForwardInvocation，进行转发
     if (![self ensureForwardingMethodsAreSwizzled:swizzlingImplementorClass error:error]) {
         return NO;
     }
@@ -848,16 +852,20 @@ static NSMutableDictionary<NSString *, RXInterceptWithOptimizedObserver> *optimi
 #if TRACE_RESOURCES
     atomic_fetch_add(&numberOfForwardedMethods, 1);
 #endif
+    // 新加方法: _RX_namespace_prepareForReuse
     SEL rxSelector = RX_selector(selector);
 
+    // selector = prepareForReuse，获取原始方法
     Method instanceMethod = class_getInstanceMethod(swizzlingImplementorClass, selector);
     ALWAYS(instanceMethod != nil, @"Instance method is nil");
-
+    
+    // 原始方法签名
     const char* methodEncoding = method_getTypeEncoding(instanceMethod);
     ALWAYS(methodEncoding != nil, @"Method encoding is nil.");
     NSMethodSignature *methodSignature = [NSMethodSignature signatureWithObjCTypes:methodEncoding];
     ALWAYS(methodSignature != nil, @"Method signature is invalid.");
 
+    // 原始方法实现
     IMP implementation = method_getImplementation(instanceMethod);
 
     if (implementation == nil) {
@@ -866,12 +874,15 @@ static NSMutableDictionary<NSString *, RXInterceptWithOptimizedObserver> *optimi
                                        userInfo:nil], NO);
     }
 
+    // 新加方法绑定原始方法实现
     if (!class_addMethod(swizzlingImplementorClass, rxSelector, implementation, methodEncoding)) {
         RX_THROW_ERROR([NSError errorWithDomain:RXObjCRuntimeErrorDomain
                                            code:RXObjCRuntimeErrorSavingOriginalForwardingMethodFailed
                                        userInfo:nil], NO);
     }
 
+    // 原始方法添加_objc_msgForward实现
+    // 调用原始方法时，会如何？走转发，到新方法？
     if (!class_addMethod(swizzlingImplementorClass, selector, _objc_msgForward, methodEncoding)) {
         if (implementation != method_setImplementation(instanceMethod, _objc_msgForward)) {
             THREADING_HAZARD(swizzlingImplementorClass);
@@ -927,7 +938,7 @@ static NSMutableDictionary<NSString *, RXInterceptWithOptimizedObserver> *optimi
         return YES;
     }
 
-    if (![self swizzleForwardInvocation:class error:error]) { return NO; }
+    if (![self swizzleForwardInvocation:class error:error]) { return NO; } // 转发到messageSentWithArguments、methodInvokedWithArguments
     if (![self swizzleMethodSignatureForSelector:class error:error]) { return NO; }
     if (![self swizzleRespondsToSelector:class error:error]) { return NO; }
 

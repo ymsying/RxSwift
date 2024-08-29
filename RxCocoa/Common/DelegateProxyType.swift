@@ -321,7 +321,7 @@ extension DelegateProxyType where ParentObject: HasPrefetchDataSource, Self.Dele
                 -> Disposable
                 where DelegateProxy.ParentObject: UIView
                 , DelegateProxy.Delegate: AnyObject {
-                let proxy = DelegateProxy.proxy(for: object)
+                let proxy = DelegateProxy.proxy(for: object) // 创建tableview等view实例的代理
                 let unregisterDelegate = DelegateProxy.installForwardDelegate(dataSource, retainDelegate: retainDataSource, onProxyForObject: object)
 
                 // Do not perform layoutIfNeeded if the object is still not in the view hierarchy
@@ -345,6 +345,7 @@ extension DelegateProxyType where ParentObject: HasPrefetchDataSource, Self.Dele
                             assert(proxy === DelegateProxy.currentDelegate(for: object), "Proxy changed from the time it was first set.\nOriginal: \(proxy)\nExisting: \(String(describing: DelegateProxy.currentDelegate(for: object)))")
                         }
                         
+                        // 有更新立即向外发送
                         binding(proxy, event)
                         
                         switch event {

@@ -29,6 +29,7 @@ public final class MainScheduler : SerialDispatchQueueScheduler {
 
     /// Initializes new instance of `MainScheduler`.
     public init() {
+        // 固定main queue
         self.mainQueue = DispatchQueue.main
         super.init(serialQueue: self.mainQueue)
     }
@@ -66,7 +67,7 @@ public final class MainScheduler : SerialDispatchQueueScheduler {
         }
 
         let cancel = SingleAssignmentDisposable()
-
+        // 固定main queue async
         self.mainQueue.async {
             if !cancel.isDisposed {
                 cancel.setDisposable(action(state))

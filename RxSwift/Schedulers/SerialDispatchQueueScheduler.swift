@@ -89,6 +89,8 @@ public class SerialDispatchQueueScheduler : SchedulerType {
         self.init(queue: DispatchQueue.global(qos: qos.qosClass), internalSerialQueueName: internalSerialQueueName, leeway: leeway)
     }
     
+    
+    // 立即执行一个任务
     /**
     Schedules an action to be executed immediately.
     
@@ -104,6 +106,7 @@ public class SerialDispatchQueueScheduler : SchedulerType {
         self.configuration.schedule(state, action: action)
     }
 
+    // 指定时间执行一次任务
     /**
     Schedules an action to be executed.
     
@@ -116,6 +119,7 @@ public class SerialDispatchQueueScheduler : SchedulerType {
         self.configuration.scheduleRelative(state, dueTime: dueTime, action: action)
     }
     
+    // 周期性事件
     /**
     Schedules a periodic piece of work.
     
